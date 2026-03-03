@@ -238,12 +238,10 @@ public class WebTermListActivity extends Activity {
             }
             
             WebTermItem item = webTermList.get(position);
-            // 格式: C:\path\to > command args
-            String displayText = item.cwd.isEmpty() 
-                ? item.command 
-                : item.cwd + " > " + item.command;
-            holder.tvCommand.setText(displayText);
-            holder.tvUrl.setText(item.url);
+            // 格式: command
+            holder.tvCommand.setText(item.command);
+            // 第二行显示工作目录
+            holder.tvUrl.setText(item.cwd.isEmpty() ? "" : "📁 " + item.cwd);
             
             // 设置停止按钮点击事件（按钮会拦截事件，不会触发列表项点击）
             if (holder.btnStop != null) {

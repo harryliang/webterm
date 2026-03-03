@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webterm Hub - Server 列表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f0f2f5;
+            padding: 16px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            opacity: 0.9;
+            font-size: 12px;
+        }
+        .refresh-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .refresh-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .server-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .server-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+        .server-card:last-child {
+            margin-bottom: 0;
+        }
+        .server-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .server-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .server-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .server-info h2 {
+            font-size: 15px;
+            color: #333;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .server-meta {
+            font-size: 11px;
+            color: #888;
+        }
+        .server-meta span {
+            margin-right: 12px;
+        }
+        .term-list {
+            padding: 8px 8px 8px 48px;
+        }
+        .term-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        .term-item:hover {
+            background: #f5f7fa;
+            border-color: #e4e7ed;
+        }
+        .term-item + .term-item {
+            border-top: 1px solid #f0f0f0;
+        }
+        .term-item:hover + .term-item {
+            border-top-color: transparent;
+        }
+        .term-icon {
+            width: 32px;
+            height: 32px;
+            background: #52c41a;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .term-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .term-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        .term-cwd {
+            font-size: 11px;
+            color: #888;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .term-arrow {
+            color: #ccc;
+            font-size: 14px;
+            margin-left: 8px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+        .empty-state h3 {
+            font-size: 16px;
+            margin-bottom: 6px;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+        .spinner {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            background: #fff2f0;
+            color: #cf1322;
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #ffccc7;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #52c41a;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🖥️ Webterm Hub</h1>
+            <p class="subtitle">统一管理多台设备的 Web 终端</p>
+            <div class="refresh-info">
+                <span class="status-dot"></span>
+                <span id="last-update">正在加载...</span>
+                <button class="refresh-btn" onclick="loadServers()" id="refresh-btn">立即刷新</button>
+            </div>
+        </header>
+
+        <div id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>正在加载 Server 列表...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefreshInterval;
+
+        async function loadServers() {
+            const btn = document.getElementById('refresh-btn');
+            btn.disabled = true;
+            btn.textContent = '刷新中...';
+
+            try {
+                const response = await fetch('/api/servers');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const servers = await response.json();
+                renderServers(servers);
+                updateLastUpdateTime();
+            } catch (error) {
+                renderError(error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '立即刷新';
+            }
+        }
+
+        function renderServers(servers) {
+            const content = document.getElementById('content');
+            
+            if (servers.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>暂无可用 Server</h3>
+                        <p>请确保至少有一个 webterm 实例连接到 Hub</p>
+                    </div>
+                `;
+                return;
+            }
+
+            content.innerHTML = servers.map(server => `
+                <div class="server-card">
+                    <div class="server-header">
+                        <div class="server-icon">💻</div>
+                        <div class="server-info">
+                            <h2>${escapeHtml(server.hostname)}</h2>
+                            <div class="server-meta">
+                                <span>👤 ${escapeHtml(server.user)}</span>
+                                <span>📡 ${server.webterms.length} 个终端</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="term-list">
+                        ${server.webterms.map(term => `
+                            <a href="${term.url}" target="_blank" class="term-item">
+                                <div class="term-icon">🖥️</div>
+                                <div class="term-info">
+                                    <div class="term-name">${escapeHtml(term.command)}</div>
+                                    <div class="term-cwd" title="${escapeHtml(term.cwd)}">📁 ${escapeHtml(term.cwd || '未知目录')}</div>
+                                </div>
+                                <div class="term-arrow">→</div>
+                            </a>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderError(message) {
+            document.getElementById('content').innerHTML = `
+                <div class="error">
+                    <h3>❌ 加载失败</h3>
+                    <p>${escapeHtml(message)}</p>
+                    <p style="margin-top: 8px; font-size: 12px;">请检查 Hub 服务是否正常运行</p>
+                </div>
+            `;
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('last-update').textContent = `上次更新: ${timeStr}`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function startAutoRefresh() {
+            loadServers();
+            autoRefreshInterval = setInterval(loadServers, 30000);
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(autoRefreshInterval);
+            } else {
+                loadServers();
+                autoRefreshInterval = setInterval(loadServers, 30000);
+            }
+        });
+
+        startAutoRefresh();
+    </script>
+</body>
+</html>

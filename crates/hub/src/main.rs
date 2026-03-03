@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 use axum::{
     extract::State,
     http::StatusCode,
-    response::Json,
+    response::{Html, Json},
     routing::{get, post},
     Router,
 };
@@ -36,15 +36,16 @@ struct ServerInfo {
 }
 
 /// WebTerm 会话信息
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct WebTermInfo {
     id: String,
     url: String,
     command: String,
     #[serde(rename = "cwd")]
     work_dir: String,
+    #[serde(skip, default = "Utc::now")]
     created_at: DateTime<Utc>,
-    #[serde(skip_serializing)]
+    #[serde(skip)]
     last_heartbeat: DateTime<Utc>,
 }
 
@@ -63,7 +64,15 @@ enum HubMessage {
     #[serde(rename = "heartbeat")]
     Heartbeat {
         server_id: String,
+        #[serde(default)]
+        server_name: String,
+        #[serde(default)]
+        user: String,
+        #[serde(default)]
+        hostname: String,
         active_webterms: Vec<String>,
+        #[serde(default)]
+        webterms_info: Vec<WebTermInfo>,
     },
     #[serde(rename = "unregister")]
     Unregister {
@@ -195,17 +204,57 @@ impl AppState {
     fn update_heartbeat(&self, msg: HubMessage) {
         if let HubMessage::Heartbeat {
             server_id,
+            server_name,
+            user,
+            hostname,
             active_webterms,
+            webterms_info,
         } = msg
         {
+            let now = Utc::now();
+            
+            // 如果 Server 不存在（Hub 重启后），从心跳信息中恢复
+            if !self.servers.contains_key(&server_id) {
+                info!("收到心跳但 Server {} 不存在，从心跳恢复完整信息", server_id);
+                
+                // 使用心跳中的 Server 信息，如果不存在则使用默认值
+                let name = if server_name.is_empty() { 
+                    format!("恢复中... ({})", &server_id[..8.min(server_id.len())])
+                } else { 
+                    server_name 
+                };
+                let user = if user.is_empty() { "unknown".to_string() } else { user };
+                let hostname = if hostname.is_empty() { "unknown".to_string() } else { hostname };
+                
+                let placeholder = ServerInfo {
+                    id: server_id.clone(),
+                    name,
+                    user,
+                    hostname,
+                    last_heartbeat: now,
+                    webterms: vec![],
+                };
+                self.servers.insert(server_id.clone(), placeholder);
+            }
+            
             if let Some(mut server) = self.servers.get_mut(&server_id) {
-                let now = Utc::now();
                 server.last_heartbeat = now;
                 
-                // 更新每个活跃的 webterm 的心跳时间
-                for wt_id in &active_webterms {
-                    if let Some(wt) = server.webterms.iter_mut().find(|wt| wt.id == *wt_id) {
-                        wt.last_heartbeat = now;
+                // 从心跳中恢复缺失的 webterm 信息
+                for wt_info in webterms_info {
+                    let wt_id = &wt_info.id;
+                    
+                    // 检查是否已存在该 webterm
+                    if let Some(existing) = server.webterms.iter_mut().find(|wt| wt.id == *wt_id) {
+                        // 更新现有 term 的心跳时间
+                        existing.last_heartbeat = now;
+                    } else {
+                        // 恢复缺失的 webterm
+                        info!("从心跳恢复 WebTerm: {} ({})", wt_id, wt_info.command);
+                        let mut new_wt = wt_info.clone();
+                        new_wt.last_heartbeat = now;
+                        server.webterms.push(new_wt);
+                        self.webterms.insert(wt_id.clone(), wt_info.clone());
                     }
                 }
                 
@@ -436,7 +485,8 @@ async fn main() -> Result<()> {
     println!("  心跳超时:      {} 秒", config.heartbeat_timeout);
     println!("----------------------------------------");
     println!("  可用接口:");
-    println!("    GET http://{}/api/servers  (Server列表)", config.http_bind);
+    println!("    GET http://{}            (Web 控制台)", config.http_bind);
+    println!("    GET http://{}/api/servers  (Server列表API)", config.http_bind);
     println!("    GET http://{}/api/health   (健康检查)", config.http_bind);
     println!("========================================");
     println!("");
@@ -492,12 +542,18 @@ fn create_router(state: AppState) -> Router {
         .allow_headers(Any);
 
     Router::new()
+        .route("/", get(index_page))
         .route("/api/servers", get(list_servers))
         .route("/api/servers/:id", get(get_server))
         .route("/api/servers/:id/control", post(control_server))
         .route("/api/health", get(health_check))
         .layer(cors)
         .with_state(state)
+}
+
+/// 首页 - Server 列表页面
+async fn index_page() -> Html<&'static str> {
+    Html(include_str!("../static/index.html"))
 }
 
 /// 获取所有 Server 列表
@@ -679,13 +735,16 @@ async fn run_cleanup_task(state: AppState, heartbeat_timeout: i64, cleanup_inter
         ticker.tick().await;
 
         let now = Utc::now();
+        let mut offline_servers = Vec::new();
         
-        // 清理每个 server 下离线的 webterms
-        let mut empty_servers = Vec::new();
-        
+        // 清理每个 server 下离线的 webterms，并标记超时的 Server
         for mut entry in state.servers.iter_mut() {
             let server = entry.value_mut();
             let original_count = server.webterms.len();
+            
+            // 检查 Server 本身是否已超时
+            let server_elapsed = now - server.last_heartbeat;
+            let server_offline = server_elapsed.num_seconds() >= heartbeat_timeout;
             
             // 保留心跳超时时间内的 webterms
             server.webterms.retain(|wt| {
@@ -698,16 +757,16 @@ async fn run_cleanup_task(state: AppState, heartbeat_timeout: i64, cleanup_inter
                 keep
             });
             
-            // 如果 server 下没有 webterm 了，标记为待清理
-            if server.webterms.is_empty() && original_count > 0 {
-                empty_servers.push(server.id.clone());
+            // 如果 server 超时了，或者没有 webterm 了，标记为待清理
+            if server_offline || (server.webterms.is_empty() && original_count > 0) {
+                offline_servers.push(server.id.clone());
             }
         }
         
-        // 清理没有 webterm 的 server
-        for id in empty_servers {
+        // 清理离线的 server
+        for id in offline_servers {
             if let Some((_, server)) = state.servers.remove(&id) {
-                info!("清理空 Server: {} ({})", id, server.name);
+                info!("清理离线 Server: {} ({})", id, server.name);
             }
         }
     }

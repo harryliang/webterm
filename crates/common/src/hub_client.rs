@@ -42,6 +42,7 @@ pub struct HubClient {
     user: String,
     hostname: String,
     work_dir: String,
+    command: Arc<Mutex<String>>,
     mqtt_config: MqttConfig,
     control_tx: Option<ControlCommandSender>,
     active_webterms: Arc<Mutex<HashSet<String>>>,
@@ -68,12 +69,25 @@ struct WebTermInfo {
     work_dir: String,
 }
 
+#[derive(Serialize, Clone)]
+struct WebTermHeartbeatInfo {
+    id: String,
+    url: String,
+    command: String,
+    #[serde(rename = "cwd")]
+    work_dir: String,
+}
+
 #[derive(Serialize)]
 struct HeartbeatMessage {
     #[serde(rename = "type")]
     msg_type: String,
     server_id: String,
+    server_name: String,
+    user: String,
+    hostname: String,
     active_webterms: Vec<String>,
+    webterms_info: Vec<WebTermHeartbeatInfo>,
 }
 
 #[derive(Serialize)]
@@ -233,6 +247,7 @@ impl HubClient {
             user: user.clone(),
             hostname: hostname.clone(),
             work_dir: cwd,
+            command: Arc::new(Mutex::new("unknown".to_string())),
             mqtt_config: mqtt_config_clone,
             control_tx: Some(control_tx.clone()),
             active_webterms: Arc::new(Mutex::new(HashSet::new())),
@@ -282,6 +297,12 @@ impl HubClient {
 
     /// 注册 WebTerm
     pub async fn register(&self, webterm_id: &str, command: &str) -> Result<()> {
+        // 保存命令信息
+        {
+            let mut cmd = self.command.lock().unwrap();
+            *cmd = command.to_string();
+        }
+        
         // 添加到活跃 webterms 列表
         {
             let mut webterms = self.active_webterms.lock().unwrap();
@@ -341,6 +362,12 @@ impl HubClient {
     pub fn start_heartbeat(&self) {
         let client = self.client.clone();
         let server_id = self.server_id.clone();
+        let server_name = self.server_name.clone();
+        let user = self.user.clone();
+        let hostname = self.hostname.clone();
+        let work_dir = self.work_dir.clone();
+        let command = self.command.clone();
+        let base_url = self.base_url.clone();
         let heartbeat_interval = self.mqtt_config.keep_alive.max(30);
         let active_webterms = self.active_webterms.clone();
         
@@ -351,15 +378,33 @@ impl HubClient {
                 ticker.tick().await;
                 
                 // 获取所有活跃的 webterms
-                let webterms: Vec<String> = {
+                let webterm_ids: Vec<String> = {
                     let guard = active_webterms.lock().unwrap();
                     guard.iter().cloned().collect()
                 };
+                
+                // 构建每个 webterm 的详细信息
+                let cmd_str = {
+                    let cmd = command.lock().unwrap();
+                    cmd.clone()
+                };
+                let webterms_info: Vec<WebTermHeartbeatInfo> = webterm_ids.iter().map(|id| {
+                    WebTermHeartbeatInfo {
+                        id: id.clone(),
+                        url: format!("{}?session={}", base_url, id),
+                        command: cmd_str.clone(),
+                        work_dir: work_dir.clone(),
+                    }
+                }).collect();
 
                 let msg = HeartbeatMessage {
                     msg_type: "heartbeat".to_string(),
                     server_id: server_id.clone(),
-                    active_webterms: webterms,
+                    server_name: server_name.clone(),
+                    user: user.clone(),
+                    hostname: hostname.clone(),
+                    active_webterms: webterm_ids,
+                    webterms_info,
                 };
 
                 match serde_json::to_string(&msg) {

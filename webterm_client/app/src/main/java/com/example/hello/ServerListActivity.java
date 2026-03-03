@@ -156,7 +156,7 @@ public class ServerListActivity extends Activity {
         if (server.webterms.isEmpty()) {
             // 如果没有活跃的终端，提示用户是否创建新终端
             new AlertDialog.Builder(this)
-                .setTitle(server.name)
+                .setTitle(server.hostname)
                 .setMessage("该 Server 没有活跃的终端，是否创建新终端？")
                 .setPositiveButton("创建", (dialog, which) -> {
                     showStartTerminalDialog(server);
@@ -170,7 +170,7 @@ public class ServerListActivity extends Activity {
         if (server.webterms.size() > 1) {
             Intent intent = new Intent(this, WebTermListActivity.class);
             intent.putExtra("server_id", server.id);
-            intent.putExtra("server_name", server.name);
+            intent.putExtra("server_name", server.hostname);
             // 传递 webterms 数据
             JSONArray wtArray = new JSONArray();
             for (WebTermInfo wt : server.webterms) {
@@ -196,7 +196,7 @@ public class ServerListActivity extends Activity {
     private void showServerOptions(ServerInfo server) {
         String[] options = {"打开终端", "启动新终端", "停止终端", "刷新"};
         new AlertDialog.Builder(this)
-            .setTitle(server.name)
+            .setTitle(server.hostname)
             .setItems(options, (dialog, which) -> {
                 switch (which) {
                     case 0:
@@ -286,8 +286,8 @@ public class ServerListActivity extends Activity {
             }
             
             ServerInfo server = serverList.get(position);
-            holder.tvName.setText(server.name);
-            holder.tvInfo.setText(server.hostname + " | " + server.user);
+            holder.tvName.setText(server.hostname);
+            holder.tvInfo.setText(server.user);
             holder.tvStatus.setText(server.webterms.size() + " 个会话");
             
             // 设置按钮点击事件（按钮会拦截事件，不会触发列表项点击）
@@ -409,7 +409,7 @@ public class ServerListActivity extends Activity {
      */
     private void showStartTerminalDialog(ServerInfo server) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("启动新终端 - " + server.name);
+        builder.setTitle("启动新终端 - " + server.hostname);
         
         final EditText input = new EditText(this);
         input.setHint("输入命令（可选，默认使用系统 shell）");
