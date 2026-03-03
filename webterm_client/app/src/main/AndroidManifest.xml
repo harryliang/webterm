@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.hello"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="35" />
+    
+    <!-- 网络权限 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    
+    <!-- 前台服务权限（保持 MQTT 连接） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:usesCleartextTraffic="true">
+        
+        <!-- Server 列表（主入口） -->
+        <activity
+            android:name=".ServerListActivity"
+            android:label="@string/app_name"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- WebTerm 列表 -->
+        <activity
+            android:name=".WebTermListActivity"
+            android:label="选择会话"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+        
+        <!-- Web 终端 -->
+        <activity
+            android:name=".MainActivity"
+            android:label="Web Terminal"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:windowSoftInputMode="adjustResize" />
+        
+        <!-- MQTT 后台服务 -->
+        <service 
+            android:name=".MqttService"
+            android:enabled="true"
+            android:exported="false" />
+        
+    </application>
+
+</manifest>

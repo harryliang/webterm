@@ -1,0 +1,39 @@
+[workspace]
+members = ["crates/common", "crates/webterm", "crates/hub"]
+resolver = "2"
+
+[profile.release]
+opt-level = "z"     # 优化大小（z = 最小体积，s = 较小体积）
+lto = true          # 链接时优化
+codegen-units = 1   # 单代码生成单元，更好的优化
+panic = "abort"     # 移除 panic 展开代码
+strip = true        # 自动去除符号表
+
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+authors = ["webterm contributors"]
+license = "MIT"
+repository = "https://github.com/yourusername/webterm"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1"
+log = "0.4"
+env_logger = "0.11"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+md5 = "0.7"
+gethostname = "0.4"
+whoami = "1.5"
+dirs = "5"
+clap = { version = "4", features = ["derive"] }
+axum = { version = "0.7", features = ["ws"] }
+tower-http = { version = "0.5", features = ["fs"] }
+futures = "0.3"
+portable-pty = "0.9"
+rumqttc = "0.24"
+dashmap = "5"

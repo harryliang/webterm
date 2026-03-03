@@ -1,0 +1,35 @@
+[package]
+name = "webterm"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+description = "Web terminal tool - Access command line via browser"
+
+[[bin]]
+name = "webterm"
+path = "src/main.rs"
+
+[dependencies]
+webterm-common = { path = "../common" }
+
+tokio = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+env_logger = { workspace = true }
+clap = { workspace = true }
+axum = { workspace = true }
+tower-http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+futures = { workspace = true }
+portable-pty = { workspace = true }
+rumqttc = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+md5 = { workspace = true }
+gethostname = { workspace = true }
+whoami = { workspace = true }
+dirs = { workspace = true }
+dashmap = { workspace = true }

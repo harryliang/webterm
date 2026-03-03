@@ -1,0 +1,28 @@
+# Rust
+target/
+**/target/
+**/*.rs.bk
+*.pdb
+*.exe
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+/tmp
+*.tmp
+
+# Android
+*.apk
+*.idsig
+*.dex
+*.zip
+webterm_client/**/build/
+
+# Project specific
+hub.err
+hub.log

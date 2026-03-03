@@ -1,0 +1,40 @@
+[package]
+name = "webterm-hub"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+description = "Webterm Hub - Central management service"
+
+[[bin]]
+name = "webterm-hub"
+path = "src/main.rs"
+
+[dependencies]
+# MQTT
+rumqttc = { workspace = true }
+
+# HTTP API
+axum = { workspace = true }
+tower-http = { version = "0.5", features = ["cors"] }
+
+# JSON
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# Logging
+log = { workspace = true }
+env_logger = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# State sharing
+dashmap = { workspace = true }

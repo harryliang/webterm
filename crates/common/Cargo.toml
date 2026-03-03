@@ -1,0 +1,33 @@
+[package]
+name = "webterm-common"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+description = "Webterm shared library"
+
+[dependencies]
+tokio = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+md5 = { workspace = true }
+gethostname = { workspace = true }
+whoami = { workspace = true }
+dirs = { workspace = true }
+
+# webterm dependencies
+axum = { workspace = true }
+tower-http = { workspace = true }
+futures = { workspace = true }
+portable-pty = { workspace = true }
+rumqttc = { workspace = true }
+dashmap = { workspace = true }
+
+[features]
+default = []
