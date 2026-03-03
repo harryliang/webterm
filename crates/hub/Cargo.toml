@@ -6,6 +6,8 @@ authors.workspace = true
 license.workspace = true
 
 description = "Webterm Hub - Central management service"
+repository.workspace = true
+homepage.workspace = true
 
 [[bin]]
 name = "webterm-hub"

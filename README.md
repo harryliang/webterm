@@ -159,6 +159,20 @@ buffer_size = 8192
 
 MIT License
 
+## 第三方依赖
+
+本项目使用了以下开源项目：
+
+- **[xterm.js](https://xtermjs.org/)** - MIT License
+- **[xterm-addon-fit](https://github.com/xtermjs/xterm.js)** - MIT License  
+- **[Eclipse Paho MQTT Java Client](https://www.eclipse.org/paho/)** - EPL 2.0 License
+
+Android 客户端使用的 MQTT 库遵循 EPL 2.0 许可证。
+
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！
+欢迎提交 Issue 和 Pull Request！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解详情。
+
+## 更新日志
+
+详见 [CHANGELOG.md](CHANGELOG.md)。
