@@ -6,7 +6,7 @@
 
 ### 报告问题
 
-如果您发现了 bug 或有功能建议，请通过 [GitHub Issues](https://github.com/yourusername/webterm/issues) 提交：
+如果您发现了 bug 或有功能建议，请通过 [GitHub Issues](https://github.com/harryliang/webterm/issues) 提交：
 
 1. 搜索现有 issues，避免重复提交
 2. 使用清晰的标题描述问题

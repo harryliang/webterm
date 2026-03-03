@@ -14,9 +14,9 @@ version = "0.2.0"
 edition = "2021"
 authors = ["webterm contributors"]
 license = "MIT"
-repository = "https://github.com/yourusername/webterm"
-homepage = "https://github.com/yourusername/webterm"
-documentation = "https://github.com/yourusername/webterm#readme"
+repository = "https://github.com/harryliang/webterm"
+homepage = "https://github.com/harryliang/webterm"
+documentation = "https://github.com/harryliang/webterm#readme"
 
 [workspace.dependencies]
 tokio = { version = "1", features = ["full"] }

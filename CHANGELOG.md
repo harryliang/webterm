@@ -37,6 +37,6 @@
 - 会话保持功能
 - 基本终端操作（Tab 补全、Ctrl+C 等）
 
-[未发布]: https://github.com/yourusername/webterm/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/yourusername/webterm/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/yourusername/webterm/releases/tag/v0.1.0
+[未发布]: https://github.com/harryliang/webterm/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/harryliang/webterm/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/harryliang/webterm/releases/tag/v0.1.0
